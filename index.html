@@ -21,17 +21,33 @@
     }
 
     #status {
-      margin-bottom: 16px;
+      margin-bottom: 24px;
       color: #666;
       font-size: 14px;
     }
 
+    /* カテゴリ全体 */
+    .category-section {
+      margin-bottom: 32px;
+    }
+
+    /* カテゴリ見出し */
+    .category-title {
+      font-size: 20px;
+      font-weight: bold;
+      margin: 0 0 12px 2px;
+      padding-left: 10px;
+      border-left: 4px solid #06c755;
+    }
+
+    /* 商品一覧 */
     .grid {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
       gap: 12px;
     }
 
+    /* 商品カード */
     .card {
       background: white;
       border-radius: 12px;
@@ -85,6 +101,11 @@
       background: #06c755;
       color: white;
       font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:active {
+      opacity: 0.8;
     }
   </style>
 </head>
@@ -97,9 +118,11 @@
     LINE情報を確認しています...
   </div>
 
-  <div id="products" class="grid"></div>
+  <div id="products"></div>
+
 
   <script>
+
     const LIFF_ID = '2011452774-69ShBQM0';
 
     const API_URL =
@@ -107,148 +130,500 @@
 
     let currentUser = null;
 
+
+    /* =========================================
+       起動
+    ========================================= */
+
     async function start() {
-      const status = document.getElementById('status');
+
+      const status =
+        document.getElementById('status');
 
       try {
+
         await liff.init({
           liffId: LIFF_ID
         });
 
+
         if (!liff.isLoggedIn()) {
+
           liff.login();
+
           return;
+
         }
 
-        const profile = await liff.getProfile();
+
+        const profile =
+          await liff.getProfile();
+
 
         currentUser = {
-          userId: profile.userId,
-          displayName: profile.displayName
+
+          userId:
+            profile.userId,
+
+          displayName:
+            profile.displayName
+
         };
 
+
         status.textContent =
-          'ログイン中：' + currentUser.displayName + ' さん';
+          'ログイン中：' +
+          currentUser.displayName +
+          ' さん';
+
 
         await loadProducts();
 
+
       } catch (error) {
+
         console.error(error);
 
         status.textContent =
-          'エラー：' + (error.message || String(error));
+          'エラー：' +
+          (
+            error.message ||
+            String(error)
+          );
+
       }
+
     }
+
+
+
+    /* =========================================
+       商品取得
+    ========================================= */
 
     async function loadProducts() {
-      const response = await fetch(
-        API_URL + '?action=products'
-      );
 
-      const data = await response.json();
+      const response =
+        await fetch(
+          API_URL +
+          '?action=products'
+        );
+
+
+      const data =
+        await response.json();
+
 
       if (!data.success) {
-        throw new Error('商品情報を取得できませんでした。');
+
+        throw new Error(
+          '商品情報を取得できませんでした。'
+        );
+
       }
 
-      showProducts(data.products);
+
+      showProducts(
+        data.products
+      );
+
     }
 
+
+
+    /* =========================================
+       商品表示
+    ========================================= */
+
     function showProducts(products) {
-      const container = document.getElementById('products');
+
+      const container =
+        document.getElementById(
+          'products'
+        );
+
 
       container.innerHTML = '';
 
-      products.forEach(product => {
-        const card = document.createElement('div');
-        card.className = 'card';
 
-        const imageHtml =
-          product.imageUrl &&
-          product.imageUrl !== '画像URL'
-            ? `<img class="image" src="${product.imageUrl}">`
-            : `<div class="placeholder"></div>`;
+      /*
+        表示するカテゴリの順番
+      */
 
-        card.innerHTML = `
-          ${imageHtml}
+      const categoryOrder = [
 
-          <div class="name">
-            ${product.name}
-          </div>
+        'No.6',
 
-          <div class="price">
-            ¥${Number(product.price).toLocaleString()}
-          </div>
+        'Colors',
 
-          <div class="description">
-            ${product.description || ''}
-          </div>
+        'PRIVATE LAB',
 
-          <div class="winners">
-            当選 ${product.winners}名
-          </div>
+        '特別品'
 
-          <button onclick="selectProduct('${escapeText(product.name)}')">
-            この商品に応募
-          </button>
-        `;
+      ];
 
-        container.appendChild(card);
-      });
+
+      /*
+        カテゴリごとに表示
+      */
+
+      categoryOrder.forEach(
+        categoryName => {
+
+
+          const categoryProducts =
+            products.filter(
+              product =>
+                String(
+                  product.category || ''
+                ).trim()
+                === categoryName
+            );
+
+
+          /*
+            商品が0件のカテゴリは
+            見出しごと表示しない
+          */
+
+          if (
+            categoryProducts.length === 0
+          ) {
+
+            return;
+
+          }
+
+
+          /* -------------------------
+             カテゴリ全体
+          ------------------------- */
+
+          const section =
+            document.createElement(
+              'section'
+            );
+
+
+          section.className =
+            'category-section';
+
+
+
+          /* -------------------------
+             カテゴリ見出し
+          ------------------------- */
+
+          const title =
+            document.createElement(
+              'h2'
+            );
+
+
+          title.className =
+            'category-title';
+
+
+          title.textContent =
+            categoryName;
+
+
+          section.appendChild(
+            title
+          );
+
+
+
+          /* -------------------------
+             商品グリッド
+          ------------------------- */
+
+          const grid =
+            document.createElement(
+              'div'
+            );
+
+
+          grid.className =
+            'grid';
+
+
+
+          /* -------------------------
+             商品カード
+          ------------------------- */
+
+          categoryProducts.forEach(
+            product => {
+
+
+              const card =
+                document.createElement(
+                  'div'
+                );
+
+
+              card.className =
+                'card';
+
+
+
+              const imageHtml =
+
+                product.imageUrl &&
+                product.imageUrl !==
+                  '画像URL'
+
+                  ? `
+                    <img
+                      class="image"
+                      src="${product.imageUrl}"
+                      alt="${escapeHtml(product.name)}"
+                    >
+                  `
+
+                  : `
+                    <div
+                      class="placeholder"
+                    ></div>
+                  `;
+
+
+
+              card.innerHTML = `
+
+                ${imageHtml}
+
+                <div class="name">
+                  ${escapeHtml(product.name)}
+                </div>
+
+                <div class="price">
+                  ¥${Number(
+                    product.price
+                  ).toLocaleString()}
+                </div>
+
+                <div class="description">
+                  ${escapeHtml(
+                    product.description || ''
+                  )}
+                </div>
+
+                <div class="winners">
+                  当選 ${product.winners}名
+                </div>
+
+                <button
+                  class="apply-button"
+                >
+                  この商品に応募
+                </button>
+
+              `;
+
+
+              /*
+                応募ボタン
+              */
+
+              const button =
+                card.querySelector(
+                  '.apply-button'
+                );
+
+
+              button.addEventListener(
+                'click',
+                () => {
+
+                  selectProduct(
+                    product.name
+                  );
+
+                }
+              );
+
+
+              grid.appendChild(
+                card
+              );
+
+            }
+          );
+
+
+          section.appendChild(
+            grid
+          );
+
+
+          container.appendChild(
+            section
+          );
+
+        }
+      );
+
     }
 
-    async function selectProduct(productName) {
 
-  if (!currentUser) {
-    alert('LINEユーザー情報を取得できていません。');
-    return;
-  }
 
-  const ok = confirm(
-    productName + ' に応募しますか？\n\n' +
-    '※応募できるのは月1回です。'
-  );
+    /* =========================================
+       応募処理
+    ========================================= */
 
-  if (!ok) return;
+    async function selectProduct(
+      productName
+    ) {
 
-  try {
 
-    const response = await fetch(API_URL, {
-      method: 'POST',
-      body: JSON.stringify({
-        action: 'apply',
-        userId: currentUser.userId,
-        displayName: currentUser.displayName,
-        productName: productName
-      })
-    });
+      if (!currentUser) {
 
-    const data = await response.json();
+        alert(
+          'LINEユーザー情報を取得できていません。'
+        );
 
-    if (data.success) {
-      alert('🎉 ' + data.message);
-    } else {
-      alert('⚠️ ' + data.message);
+        return;
+
+      }
+
+
+      const ok =
+        confirm(
+
+          productName +
+          ' に応募しますか？\n\n' +
+
+          '※応募できるのは月1回です。'
+
+        );
+
+
+      if (!ok) {
+
+        return;
+
+      }
+
+
+      try {
+
+
+        const response =
+          await fetch(
+            API_URL,
+            {
+
+              method: 'POST',
+
+              body:
+                JSON.stringify({
+
+                  action:
+                    'apply',
+
+                  userId:
+                    currentUser.userId,
+
+                  displayName:
+                    currentUser.displayName,
+
+                  productName:
+                    productName
+
+                })
+
+            }
+          );
+
+
+        const data =
+          await response.json();
+
+
+        if (data.success) {
+
+          alert(
+            '🎉 ' +
+            data.message
+          );
+
+        } else {
+
+          alert(
+            '⚠️ ' +
+            data.message
+          );
+
+        }
+
+
+      } catch (error) {
+
+
+        console.error(
+          error
+        );
+
+
+        alert(
+
+          '応募処理でエラーが発生しました。\n' +
+
+          error.message
+
+        );
+
+      }
+
     }
 
-  } catch (error) {
 
-    console.error(error);
 
-    alert(
-      '応募処理でエラーが発生しました。\n' +
-      error.message
-    );
-  }
-}
+    /* =========================================
+       HTMLエスケープ
+    ========================================= */
 
-    function escapeText(text) {
+    function escapeHtml(text) {
+
       return String(text)
-        .replace(/\\/g, '\\\\')
-        .replace(/'/g, "\\'");
+
+        .replace(
+          /&/g,
+          '&amp;'
+        )
+
+        .replace(
+          /</g,
+          '&lt;'
+        )
+
+        .replace(
+          />/g,
+          '&gt;'
+        )
+
+        .replace(
+          /"/g,
+          '&quot;'
+        )
+
+        .replace(
+          /'/g,
+          '&#039;'
+        );
+
     }
+
+
+
+    /* =========================================
+       開始
+    ========================================= */
 
     start();
+
   </script>
 
 </body>
