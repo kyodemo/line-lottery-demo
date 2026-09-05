@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>抽選デモ</title>
+
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+</head>
+
+<body>
+
+  <h1>抽選デモ</h1>
+
+  <div id="status">
+    開始前
+  </div>
+
+  <script>
+    const LIFF_ID = '2011452774-69ShBQM0';
+
+    async function start() {
+      const status = document.getElementById('status');
+
+      try {
+        status.textContent = '① LIFF初期化中';
+
+        await liff.init({
+          liffId: LIFF_ID
+        });
+
+        status.textContent = '② LIFF初期化成功';
+
+        if (!liff.isLoggedIn()) {
+          status.textContent = '③ LINEログインへ移動';
+          liff.login();
+          return;
+        }
+
+        status.textContent = '④ プロフィール取得中';
+
+        const profile = await liff.getProfile();
+
+        status.innerHTML =
+          '✅ 接続成功<br>' +
+          '表示名：' + profile.displayName + '<br>' +
+          'User ID：' + profile.userId;
+
+      } catch (e) {
+        status.innerHTML =
+          '❌ エラー<br>' +
+          String(e.message || e);
+      }
+    }
+
+    start();
+  </script>
+
+</body>
+</html>
